@@ -21,7 +21,7 @@ sp = spotipy.Spotify(auth_manager=SpotifyOAuth(
 currentSong = ""
 def get_current_user():
     user = sp.current_user()
-    print(f"Log-in as: {user['display_name']}")
+    print(f"Begin session\nLog-in as: {user['display_name']}")
 
 # Get the currently playing song
 def get_current_song():
@@ -33,36 +33,37 @@ def get_current_song():
     else:
         return []
 
+def listening():
+    while True:
+        try:
+            update_song()
+        except KeyboardInterrupt:
+            print('Ending session')
+            break
+        except ReadTimeout:
+            time.sleep(20)
+
 def update_song():
     global currentSong
     data = []
-    while True:
-        song = get_current_song()
-        if song:
-            try:
-                name = song[0]
-                if name != currentSong:
-                    current_time = datetime.now().strftime("%m/%d/%Y %I:%M:%S%p").split(" ")
-                    date = current_time[0]
-                    time_of_date = current_time[1]
-                    artist = song[1]
-                    data.append([date,name,artist,time_of_date])
-                    currentSong = name
-                    time.sleep(10)
-            except KeyboardInterrupt:
-                break
-    update_to_list(data)
-
-def update_to_list(data):
-    with open('SongHistory.csv', 'a', newline='') as csvfile:
-        dw = csv.writer(csvfile)
-        dw.writerows(data)
-
+    song = get_current_song()
+    if song:
+        name = song[0]
+        if name != currentSong:
+            current_time = datetime.now().strftime("%m/%d/%Y %I:%M:%S%p").split(" ")
+            date = current_time[0]
+            time_of_date = current_time[1]
+            artist = song[1]
+            data.append([date, name, artist, time_of_date])
+            with open('SongHistory.csv', 'a', newline='') as csvfile:
+                dw = csv.writer(csvfile)
+                dw.writerows(data)
+            currentSong = name
+            time.sleep(10)
 
 def main():
     get_current_user()
-    get_playback()
-    update_song()
+    listening()
 
 if __name__ == "__main__":
     main()
